@@ -1,0 +1,11 @@
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 8501:8501  # Mapping the correct port for Streamlit
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # Add your environment variables here if needed
+    working_dir: /app  # Set the working directory
