@@ -1,0 +1,21 @@
+pytesseract
+Pillow
+PyYAML
+PyMuPDF
+opencv-python-headless
+numpy
+transformers
+timm
+pandas
+openpyxl
+streamlit
+scikit-learn
+xlsxwriter
+pypdf
+langchain
+langchain_community
+chromadb # Vector storage
+pytest
+boto3
+langchain-aws
+tqdm
