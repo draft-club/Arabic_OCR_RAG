@@ -1,21 +1,48 @@
-import argparse
 import os
 import shutil
-from langchain_community.document_loaders import PyPDFDirectoryLoader
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    TextFileLoader,
+    DocxLoader,
+    CSVLoader,
+)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
 from embedding import get_embedding_function
 from langchain_community.vectorstores import Chroma
+from paths import OUTPUT_TEXT_PATH
 
 
 CHROMA_PATH = "chroma"
-DATA_PATH = "data"
-
+DATA_PATH = OUTPUT_TEXT_PATH
 
 
 def load_documents():
-    document_loader = PyPDFDirectoryLoader(DATA_PATH)
-    return document_loader.load()
+    documents = []
+
+    # Load all files in the directory
+    for root, _, files in os.walk(DATA_PATH):
+        for file in files:
+            file_path = os.path.join(root, file)
+            extension = os.path.splitext(file)[1].lower()
+
+            # Match loader to file extension
+            if extension == ".pdf":
+                loader = PyPDFLoader(file_path)
+                documents.extend(loader.load())
+            elif extension == ".txt":
+                loader = TextFileLoader(file_path)
+                documents.extend(loader.load())
+            elif extension == ".docx":
+                loader = DocxLoader(file_path)
+                documents.extend(loader.load())
+            elif extension == ".csv":
+                loader = CSVLoader(file_path)
+                documents.extend(loader.load())
+            else:
+                print(f"Unsupported file type: {file_path}")
+
+    return documents
 
 
 def split_documents(documents: list[Document]):
@@ -58,10 +85,6 @@ def add_to_chroma(chunks: list[Document]):
 
 
 def calculate_chunk_ids(chunks):
-
-    # This will create IDs like "data/monopoly.pdf:6:2"
-    # Page Source : Page Number : Chunk Index
-
     last_page_id = None
     current_chunk_index = 0
 
@@ -89,4 +112,4 @@ def calculate_chunk_ids(chunks):
 def clear_database():
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
-
+        print("Database cleared.")
