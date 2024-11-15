@@ -38,13 +38,13 @@ from retrieve import query_rag
 config = load_config()
 
 # Set page configuration
-st.set_page_config(page_title="RCAR E-Consignation Proof of Concept", page_icon=":keyboard:")
+st.set_page_config(page_title="RCAR E-Consignation Local ", page_icon=":keyboard:")
 
 # Apply custom CSS
 #st.markdown(APP_CSS, unsafe_allow_html=True)
 
 # App title
-st.title("RCAR E-Consignation Proof of Concept")
+st.title("RCAR E-Consignation Local ")
 
 # File upload control
 uploaded_file = st.file_uploader("Upload a PDF document", type="pdf", key="unique_pdf_uploader")

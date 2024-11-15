@@ -2,19 +2,31 @@ import os
 import shutil
 from langchain_community.document_loaders import (
     PyPDFLoader,
-    TextFileLoader,
-    DocxLoader,
     CSVLoader,
 )
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from embedding import get_embedding_function
 from langchain_community.vectorstores import Chroma
 from paths import OUTPUT_TEXT_PATH
 
-
 CHROMA_PATH = "chroma"
 DATA_PATH = OUTPUT_TEXT_PATH
+
+
+class CustomTextFileLoader:
+    """Custom loader for text files."""
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def load(self):
+        try:
+            with open(self.file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+            return [Document(page_content=content, metadata={"source": self.file_path})]
+        except Exception as e:
+            print(f"Error loading text file {self.file_path}: {e}")
+            return []
 
 
 def load_documents():
@@ -27,20 +39,20 @@ def load_documents():
             extension = os.path.splitext(file)[1].lower()
 
             # Match loader to file extension
-            if extension == ".pdf":
-                loader = PyPDFLoader(file_path)
-                documents.extend(loader.load())
-            elif extension == ".txt":
-                loader = TextFileLoader(file_path)
-                documents.extend(loader.load())
-            elif extension == ".docx":
-                loader = DocxLoader(file_path)
-                documents.extend(loader.load())
-            elif extension == ".csv":
-                loader = CSVLoader(file_path)
-                documents.extend(loader.load())
-            else:
-                print(f"Unsupported file type: {file_path}")
+            try:
+                if extension == ".pdf":
+                    loader = PyPDFLoader(file_path)
+                    documents.extend(loader.load())
+                elif extension == ".txt":
+                    loader = CustomTextFileLoader(file_path)
+                    documents.extend(loader.load())
+                elif extension == ".csv":
+                    loader = CSVLoader(file_path)
+                    documents.extend(loader.load())
+                else:
+                    print(f"Unsupported file type: {file_path}")
+            except Exception as e:
+                print(f"Error processing file {file_path}: {e}")
 
     return documents
 
@@ -90,7 +102,7 @@ def calculate_chunk_ids(chunks):
 
     for chunk in chunks:
         source = chunk.metadata.get("source")
-        page = chunk.metadata.get("page")
+        page = chunk.metadata.get("page", 0)
         current_page_id = f"{source}:{page}"
 
         # If the page ID is the same as the last one, increment the index.
@@ -103,7 +115,7 @@ def calculate_chunk_ids(chunks):
         chunk_id = f"{current_page_id}:{current_chunk_index}"
         last_page_id = current_page_id
 
-        # Add it to the page meta-data.
+        # Add it to the page metadata.
         chunk.metadata["id"] = chunk_id
 
     return chunks
@@ -113,3 +125,8 @@ def clear_database():
     if os.path.exists(CHROMA_PATH):
         shutil.rmtree(CHROMA_PATH)
         print("Database cleared.")
+    else:
+        print("No database found to clear.")
+
+
+
